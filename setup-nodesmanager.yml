@@ -39,9 +39,3 @@
         key: "{{ public_key }}"
         state: present
 
-    - name: Display configuration information
-      debug:
-        msg: |
-          Configuration completed successfully!
-          The nodesmanager user has been created with sudo rights.
-          SSH key has been installed correctly.
