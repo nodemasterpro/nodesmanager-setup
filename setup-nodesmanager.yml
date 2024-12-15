@@ -1,14 +1,14 @@
 ---
-- name: Configuration initiale pour NodesManager
+- name: Initial NodesManager Configuration
   hosts: localhost
   become: true
   vars:
     nodesmanager_user: nodesmanager
     nodesmanager_home: "/home/{{ nodesmanager_user }}"
-    public_key: "{{ lookup('url', 'https://api.nodesmanager.com/public-key') }}"
+    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCkHVqPzlUfdpnWfDSGHdnhDB1FmMiWkC/PGK7KthhErRY/BergnyAVBoKrEhVW8EAJfWmjtt/grLGWZoxmcp0djkBUxWQOL/llk5AQQXVtzQMi6Dc32HW5ouTJCY6/9N8+JUzCuRW1Ww2aJBpiWIL7kksM1dR4q3NgpwnPR03kCRO+RibnBAUvQ4/A3bssRi8PdrJRPXJyBbH3bOf+n/b6UuYbK2J+ZEG+6Kd3v+IAjnL1ARuNphMuYLcDqUShlUqO5O4IxwDU6Pd1ElC4KE22Uw0j1dRtx4CrLurgAM5q1NQCRiPAtbVzj/5SPu3Z8id7Pk3z/lCJ6FuR+VLcE5PZUh/AP+nxFGovMiS42tp9Jr60tLvtzogodOcQSGphU49y3QpEbXhCfmP25Bbal5log882IpRBcjS9vuBAb5pe/Ew7domCQc6P4ovZQwBManxmT/4U18nOrbaPiktCHVtAajz7wlM8VuOyv4t8eDNZe2bsWvEDihfCUk984z+5FNs= root@back-nfa-prod"
 
   tasks:
-    - name: Créer l'utilisateur nodesmanager
+    - name: Create nodesmanager user
       user:
         name: "{{ nodesmanager_user }}"
         shell: /bin/bash
@@ -17,7 +17,7 @@
         create_home: yes
         state: present
 
-    - name: Configurer sudo sans mot de passe pour nodesmanager
+    - name: Configure passwordless sudo for nodesmanager
       lineinfile:
         path: /etc/sudoers.d/nodesmanager
         line: "{{ nodesmanager_user }} ALL=(ALL) NOPASSWD: ALL"
@@ -25,7 +25,7 @@
         mode: '0440'
         validate: 'visudo -cf %s'
 
-    - name: Créer le répertoire .ssh
+    - name: Create .ssh directory
       file:
         path: "{{ nodesmanager_home }}/.ssh"
         state: directory
@@ -33,29 +33,15 @@
         owner: "{{ nodesmanager_user }}"
         group: "{{ nodesmanager_user }}"
 
-    - name: Installer la clé publique NodesManager
+    - name: Install NodesManager public key
       authorized_key:
         user: "{{ nodesmanager_user }}"
         key: "{{ public_key }}"
         state: present
 
-    - name: Générer un token unique
-      shell: openssl rand -hex 32
-      register: unique_token
-
-    - name: Sauvegarder le token
-      copy:
-        content: "{{ unique_token.stdout }}"
-        dest: "{{ nodesmanager_home }}/.nodesmanager_token"
-        owner: "{{ nodesmanager_user }}"
-        group: "{{ nodesmanager_user }}"
-        mode: '0600'
-
-    - name: Afficher les informations de configuration
+    - name: Display configuration information
       debug:
         msg: |
-          Configuration terminée !
-          
-          Votre token de vérification : {{ unique_token.stdout }}
-          
-          Utilisez ce token sur le dashboard NodesManager pour finaliser la configuration.
+          Configuration completed successfully!
+          The nodesmanager user has been created with sudo rights.
+          SSH key has been installed correctly.
