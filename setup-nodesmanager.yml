@@ -1,0 +1,61 @@
+---
+- name: Configuration initiale pour NodesManager
+  hosts: localhost
+  become: true
+  vars:
+    nodesmanager_user: nodesmanager
+    nodesmanager_home: "/home/{{ nodesmanager_user }}"
+    public_key: "{{ lookup('url', 'https://api.nodesmanager.com/public-key') }}"
+
+  tasks:
+    - name: Créer l'utilisateur nodesmanager
+      user:
+        name: "{{ nodesmanager_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        create_home: yes
+        state: present
+
+    - name: Configurer sudo sans mot de passe pour nodesmanager
+      lineinfile:
+        path: /etc/sudoers.d/nodesmanager
+        line: "{{ nodesmanager_user }} ALL=(ALL) NOPASSWD: ALL"
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Créer le répertoire .ssh
+      file:
+        path: "{{ nodesmanager_home }}/.ssh"
+        state: directory
+        mode: '0700'
+        owner: "{{ nodesmanager_user }}"
+        group: "{{ nodesmanager_user }}"
+
+    - name: Installer la clé publique NodesManager
+      authorized_key:
+        user: "{{ nodesmanager_user }}"
+        key: "{{ public_key }}"
+        state: present
+
+    - name: Générer un token unique
+      shell: openssl rand -hex 32
+      register: unique_token
+
+    - name: Sauvegarder le token
+      copy:
+        content: "{{ unique_token.stdout }}"
+        dest: "{{ nodesmanager_home }}/.nodesmanager_token"
+        owner: "{{ nodesmanager_user }}"
+        group: "{{ nodesmanager_user }}"
+        mode: '0600'
+
+    - name: Afficher les informations de configuration
+      debug:
+        msg: |
+          Configuration terminée !
+          
+          Votre token de vérification : {{ unique_token.stdout }}
+          
+          Utilisez ce token sur le dashboard NodesManager pour finaliser la configuration.
