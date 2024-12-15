@@ -1,0 +1,41 @@
+---
+- name: Initial NodesManager Configuration
+  hosts: localhost
+  become: true
+  vars:
+    nodesmanager_user: nodesmanager
+    nodesmanager_home: "/home/{{ nodesmanager_user }}"
+    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDLE/OBM5rowZhL99GaYZXnfdG22BvGisV6Tctz6j60z2U0kOMcxjmVOFTuoqVfELlLnKa34n5HuMPXjeIVsIV2HwAlrIfQOqBP08GirTc0M2lQu6Qvbx+Pkb3jNP+kBv6uhQs/3Uu4bbZqQ2KfwxLYqQ5SoFG/4UyNOR7B5VBzXhXcIQZqqdsNon85vK93AKb0y7Vgy8KFihGr2mNhg+bn5mWRLvAn1DAnTa0z2EQq8+1AC28t7PvNYDPri853Qir4myIUt/5woy47f2UDGM0lObFABkiw0iPYcC6NYPQ+8VcIqov+eBhIOEzWsCJzkAFgW1KmkcEXCtK6JDUtKnMxGE9ThaVyXDj4akJfHO+2pdSGqZQg8grd1M3QU4os7ZQPqNvzoAJgYxSsTHh5XGXOMY44F+dQwSUozxL1gW59ibDYyqcBy9lSk57qrbmy/VA7+RQSGwZxlLBAhfrRNZcwHZ9WjtGmVICsIpcgmSrAdVpt7TEM7cGyIU4XrXMX9Rs= root@nfa3"
+
+  tasks:
+    - name: Create nodesmanager user
+      user:
+        name: "{{ nodesmanager_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        create_home: yes
+        state: present
+
+    - name: Configure passwordless sudo for nodesmanager
+      lineinfile:
+        path: /etc/sudoers.d/nodesmanager
+        line: "{{ nodesmanager_user }} ALL=(ALL) NOPASSWD: ALL"
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Create .ssh directory
+      file:
+        path: "{{ nodesmanager_home }}/.ssh"
+        state: directory
+        mode: '0700'
+        owner: "{{ nodesmanager_user }}"
+        group: "{{ nodesmanager_user }}"
+
+    - name: Install NodesManager public key
+      authorized_key:
+        user: "{{ nodesmanager_user }}"
+        key: "{{ public_key }}"
+        state: present
+
