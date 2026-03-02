@@ -39,3 +39,9 @@
         key: "{{ public_key }}"
         state: present
 
+    - name: Open port 8443 for metrics collection
+      community.general.ufw:
+        rule: allow
+        port: '8443'
+        proto: tcp
+
