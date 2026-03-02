@@ -15,6 +15,7 @@ apt-add-repository --yes --update ppa:ansible/ansible
 apt install ansible -y
 
 # Clone and run setup playbook
+rm -rf nodesmanager-setup
 git clone https://github.com/nodemasterpro/nodesmanager-setup.git
 cd nodesmanager-setup
-ansible-playbook setup-nodesmanager-dev.yml 
+ansible-playbook setup-nodesmanager-dev.yml
